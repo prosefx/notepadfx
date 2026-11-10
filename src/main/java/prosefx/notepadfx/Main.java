@@ -10,6 +10,11 @@ public class Main {
     public static void main(String[] args) {
         Timing.mark("main");
         Timing.jvm();
+        if (args.length > 0 && args[0].equals("journal")) {
+            var file = JournalCli.file(List.of(args));
+            if (file.isEmpty()) System.exit(Exit.ERROR);
+            args = new String[]{file.get()};
+        }
         if (args.length > 0 && AgentCli.handles(args[0])) System.exit(AgentCli.run(List.of(args)));
         if (args.length > 0 && command(args[0], args.length > 1 ? args[1] : "")) return;
         var list = OpenArgs.normalize(List.of(args));

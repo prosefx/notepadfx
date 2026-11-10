@@ -131,6 +131,20 @@ class AgentProcessTest {
         assertEquals(8, cli(null, "--owner", "me", f + ":99").code());
     }
 
+    @Test void aLockedFileRefusesEveryOtherProcessThatWritesItWhileTheCommandsStillWork() throws Exception {
+        var f = file("locked.md");
+        assertEquals(0, cli(null, "--owner", "me", f.toString()).code());
+        assertEquals(0, cli(null, "lock", f.toString(), "--owner", "me").code());
+        assertTrue(cli(null, "status", f.toString()).out().contains("locked: me"));
+        assertThrows(IOException.class, () -> Files.writeString(f, "a session writing the file behind the app's back"), "another process wrote a locked file");
+        assertEquals(DOC, Files.readString(f));
+        assertEquals(0, cli(null, "test-type", f.toString(), "--after=middle", "--text=TYPED").code());
+        assertEquals(0, cli("\n>> through the app\n", "append", f.toString(), "--text-stdin").code());
+        assertEquals(4, cli(null, "unlock", f.toString(), "--owner", "stranger").code(), "a stranger lifted the lock");
+        assertEquals(0, cli(null, "unlock", f.toString(), "--owner", "me").code());
+        Files.writeString(f, "free");
+    }
+
     @Test void anOlderRunningNotepadfxIsNeverSentACommand() throws Exception {
         var marker = home.resolve("run").resolve("port.askable");
         var good = Files.readString(marker);
@@ -139,6 +153,9 @@ class AgentProcessTest {
             var r = cli(null, "files");
             assertEquals(2, r.code());
             assertTrue(r.err().contains("older version"), r.err());
+            Files.delete(marker);
+            assertEquals(2, cli(null, "files").code(), "an instance without the marker (an old one) was sent a command");
+            assertTrue(cli(null, "files").err().contains("older version"));
         } finally {
             Files.writeString(marker, good);
         }

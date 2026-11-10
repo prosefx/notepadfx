@@ -6,6 +6,11 @@ Open
   notepadfx --owner <name> <file>       say who you are: the session that opens a file may close it later
   notepadfx --new-window <file>         open it in a new window
 
+Journal (a folder with one file per day, such as a logseq graph's journals; set Journal folder and file name in Settings, F1)
+  notepadfx journal                     open today's journal, made empty if it is not there yet (works without a running notepadfx)
+  notepadfx journal -1                  yesterday (also `yesterday`); -2 the day before that; +1 tomorrow; or a date: notepadfx journal 2026-11-04
+  In the window: Shift+F1 today, Shift+F2 the day before, Shift+F3 the day after (the nearest day that has a file)
+
 Ask the running notepadfx (all need one running; one fact per line, or --json)
   notepadfx files                       the open files
   notepadfx status <file>               file, open, owner, unsaved, version, lines, conflict
@@ -19,6 +24,12 @@ Change the live text (nothing is written to the file; the person sees it in the 
     text:    --text "..." | --text-file <path> | --text-stdin
     expect:  --expect "..." | --expect-file <path>   the text you saw there; if it moved, nothing changes (exit 5): read again and retry
     --version N                         refuse unless the text is still at the version `read` gave you
+
+Lock (the file stays open and shared; no other program can write it, so a session cannot step on typing it cannot see)
+  notepadfx lock <file> --owner <name>    from now on only notepadfx writes the file: another program's write fails at once ("in use by another process"); reading is free
+  notepadfx unlock <file> --owner <name>  lifts a lock this same owner set (exit 4 for any other owner); the person lifts any lock with Shift+F4
+  While locked, change the file only with append, insert and replace above. A close of a locked file (even by the session that opened it) puts the question to the person, unless that session set the lock.
+  The lock is held by the running notepadfx and ends when the file is closed or notepadfx ends. `status` shows it as `locked: no | person | <name>`.
 
 Close (the exclusive route: close, write to the file on disk, then open it again at a line)
   notepadfx close <file> --owner <name>   the owner closes its own file when nothing is unsaved

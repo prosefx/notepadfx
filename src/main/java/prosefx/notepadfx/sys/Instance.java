@@ -43,12 +43,7 @@ public final class Instance {
 
     /** Sends a command-line verb to the running notepadfx and waits (up to waitMillis) for its answer; empty when none is running. */
     public static Optional<String> request(List<String> args, long waitMillis) {
-        try {
-            if (!Files.readString(PORT).trim().equals(Files.readString(ASKABLE).trim()))
-                return Optional.of("2\nthe running notepadfx is an older version that does not take these commands: close it and start the new one\n");
-        } catch (Exception e) {
-            return Optional.empty();
-        }
+        if (!askable()) return alive() ? Optional.of("2\nthe running notepadfx is an older version that does not take these commands: close it and start the new one\n") : Optional.empty();
         try (var s = new Socket(InetAddress.getLoopbackAddress(), Integer.parseInt(Files.readString(PORT).trim()))) {
             s.setSoTimeout((int) Math.min(Integer.MAX_VALUE, waitMillis));
             var out = new PrintWriter(new OutputStreamWriter(s.getOutputStream(), UTF_8), true);
@@ -58,6 +53,21 @@ public final class Instance {
             return Optional.of("7\nnotepadfx did not answer in time\n");
         } catch (Exception e) {
             return Optional.empty();
+        }
+    }
+
+    /** The marker beside the port file is written only by a notepadfx that takes these commands; one without it (or with another port) is an older version. */
+    static boolean askable() {
+        try { return Files.readString(PORT).trim().equals(Files.readString(ASKABLE).trim()); } catch (Exception e) { return false; }
+    }
+
+    /** Something answers on the recorded port (a leftover port file of a notepadfx that is gone does not). */
+    static boolean alive() {
+        try (var s = new Socket()) {
+            s.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), Integer.parseInt(Files.readString(PORT).trim())), 500);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 

@@ -28,6 +28,13 @@ final class SettingsDialog {
         editor.setPrefColumnCount(26);
         editor.setTooltip(new Tooltip("The program that \"Open in the other editor\" starts, with any arguments; the file is added at the end, or where {file} is written."));
 
+        var journal = new TextField(s.journalFolder());
+        journal.setPromptText("a folder with one file per day, such as a logseq graph's journals folder");
+        journal.setPrefColumnCount(26);
+        var journalFile = new TextField(s.journalFile());
+        journalFile.setPromptText(Journal.PATTERN);
+        journalFile.setTooltip(new Tooltip("The day's file name: yyyy for the year, MM month, dd day, then the extension, for example yyyy_MM_dd.md"));
+
         var grid = new GridPane(12, 10);
         grid.setPadding(new Insets(16));
         grid.addRow(0, new Label("Theme"), theme);
@@ -41,6 +48,8 @@ final class SettingsDialog {
         grid.add(menu, 0, 9, 2, 1);
         grid.add(assoc, 0, 10, 2, 1);
         grid.addRow(11, new Label("Other editor"), editor);
+        grid.addRow(12, new Label("Journal folder"), journal);
+        grid.addRow(13, new Label("Journal file name"), journalFile);
         var check = new Button("Check for updates");
         check.setMnemonicParsing(false);
         check.setOnAction(e -> Updates.checkNow());
@@ -57,6 +66,7 @@ final class SettingsDialog {
 
         var themeChanged = !theme.getValue().equals(s.theme());
         s.externalEditor(editor.getText().isBlank() ? ExternalEditor.DEFAULT : editor.getText().strip());
+        s.journalFolder(journal.getText().strip()).journalFile(journalFile.getText().isBlank() ? Journal.PATTERN : journalFile.getText().strip());
         s.zoom(zoom.getValue() / 100.0).lineNumbers(lines.isSelected())
             .outlineBullets(bullets.isSelected()).outlineParagraphs(paras.isSelected());
         if (themeChanged) Windows.toggleTheme();

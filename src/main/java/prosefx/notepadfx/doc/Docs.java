@@ -18,6 +18,7 @@ public final class Docs {
 
     public static void close(Doc d) {
         OPEN.remove(d.path);
+        d.unlock();
         if (d.hasEditor()) d.editor().close();
         d.closed.complete(null);
     }

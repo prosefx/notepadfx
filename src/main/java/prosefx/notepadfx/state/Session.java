@@ -20,4 +20,6 @@ public final class Session extends Session_A implements Json_I<Session> {
     String outlineFilter = "";
     List<String> recent = new ArrayList<>();
     String externalEditor = "code.exe";
+    String journalFolder = "";
+    String journalFile = "yyyy_MM_dd.md";
 }

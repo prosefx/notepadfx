@@ -9,7 +9,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 /** The command-line side of the agent verbs: turns the words into a request, asks the running notepadfx, prints what it says and returns the exit code. */
 public final class AgentCli {
-    public static final Set<String> VERBS = Set.of("files", "status", "read", "append", "insert", "replace", "close", "open");
+    public static final Set<String> VERBS = Set.of("files", "status", "read", "append", "insert", "replace", "close", "open", "lock", "unlock");
     static final int DEFAULT_WAIT_SECONDS = 120;
 
     public static boolean handles(String first) { return known(first) || Set.of("--help", "-h", "help").contains(first); }

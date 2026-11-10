@@ -81,11 +81,60 @@ public final class Doc {
 
     public void save() throws Exception {
         var t = text();
-        Files.write(path, file().encode(t));
+        var bytes = file().encode(t);
+        if (channel != null) writeThroughLock(bytes); else Files.write(path, bytes);
         stamp = stampOf(path);
         loaded.text(t);
         differsFromFile.set(false);
         if (editor != null) editor.markSaved();
+    }
+
+    // ---- the lock: while held, no other program can write to or delete the file; only this document can, through its own handle
+
+    private java.nio.channels.FileChannel channel;
+    private String lockedBy;
+    private final BooleanProperty lockedProperty = new SimpleBooleanProperty();
+
+    public boolean locked() { return channel != null; }
+
+    public ReadOnlyBooleanProperty lockedProperty() { return lockedProperty; }
+
+    /** Who set the lock: "person", or the name of the session that asked for it on the command line. Null when not locked. */
+    public String lockedBy() { return lockedBy; }
+
+    /**
+     * Holds the file open so that every other program's attempt to write to it fails at once ("in use by another process"),
+     * while reading stays free. The operating system lets go if notepadfx ends, however it ends. Windows only.
+     */
+    public void lock(String by) throws java.io.IOException {
+        if (channel != null) return;
+        try {
+            channel = java.nio.channels.FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE,
+                com.sun.nio.file.ExtendedOpenOption.NOSHARE_WRITE, com.sun.nio.file.ExtendedOpenOption.NOSHARE_DELETE);
+        } catch (UnsupportedOperationException e) {
+            throw new java.io.IOException("locking a file needs Windows");
+        } catch (java.io.IOException e) {
+            throw new java.io.IOException("could not lock " + name() + ": another program has it open for writing (" + e.getMessage() + ")");
+        }
+        lockedBy = by;
+        lockedProperty.set(true);
+    }
+
+    public void unlock() {
+        if (channel == null) return;
+        try { channel.close(); } catch (java.io.IOException e) { System.err.println("notepadfx: " + e); }
+        channel = null;
+        lockedBy = null;
+        lockedProperty.set(false);
+    }
+
+    /** The new bytes go in before the file is cut to their length, so a reader never meets an empty file. */
+    private void writeThroughLock(byte[] bytes) throws java.io.IOException {
+        var b = java.nio.ByteBuffer.wrap(bytes);
+        channel.position(0);
+        while (b.hasRemaining()) channel.write(b);
+        channel.truncate(bytes.length);
+        channel.force(true);
     }
 
     // ---- the file changed under us (another editor, a script, another tool)

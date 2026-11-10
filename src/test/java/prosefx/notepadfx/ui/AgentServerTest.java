@@ -127,6 +127,52 @@ class AgentServerTest {
         assertEquals("3", ask("status", p.toString())[0]);
     }
 
+    @Test void aLockedFileCannotBeWrittenByAnotherProgramButNotepadfxStillSavesAndSessionsStillEdit(@org.junit.jupiter.api.io.TempDir Path dir) throws Exception {
+        var p = file(dir, "l.md");
+        ask("open", p.toString(), "--owner=me");
+        assertEquals("no", value(ask("status", p.toString())[1], "locked"));
+        assertEquals("0", ask("lock", p.toString(), "--owner=me")[0]);
+        assertEquals("me", value(ask("status", p.toString())[1], "locked"));
+        // another program: refused, and the file is as it was
+        assertThrows(java.io.IOException.class, () -> Files.writeString(p, "stepped on you"));
+        assertThrows(java.io.IOException.class, () -> Files.delete(p));
+        assertEquals(DOC_TEXT, Files.readString(p), "a locked file can still be read");
+        // a session edits through notepadfx and the person saves
+        assertEquals("0", ask("append", p.toString(), "--text=\n>> from a session\n")[0]);
+        fx(() -> { Docs.of(p).save(); return null; });
+        assertTrue(Files.readString(p).endsWith(">> from a session\n"));
+        assertEquals(">> from a session\n", Files.readString(p).substring(DOC_TEXT.length() + 1));
+        // only the one who set the lock lifts it from the command line
+        assertEquals("4", ask("unlock", p.toString(), "--owner=other")[0]);
+        assertTrue(fx(() -> Docs.find(p).get().locked()));
+        assertEquals("0", ask("unlock", p.toString(), "--owner=me")[0]);
+        Files.writeString(p, "free again");
+        assertEquals("free again", Files.readString(p));
+    }
+
+    @Test void closingAFileSomeoneElseLockedIsAQuestionEvenForItsOwner(@org.junit.jupiter.api.io.TempDir Path dir) throws Exception {
+        var p = file(dir, "m.md");
+        ask("open", p.toString(), "--owner=me");
+        fx(() -> { Docs.of(p).lock("person"); return null; });
+        assertEquals("4", ask("close", p.toString(), "--owner=me", "--no-ask")[0]);
+        assertTrue(fx(() -> Docs.find(p).isPresent()));
+        assertEquals("4", ask("unlock", p.toString(), "--owner=me")[0]);
+        // the person says yes to the question: it closes and the lock goes with it
+        var answer = java.util.concurrent.CompletableFuture.supplyAsync(() -> { try { return ask("close", p.toString(), "--owner=me")[0]; } catch (Exception e) { throw new RuntimeException(e); } });
+        waitForPrompt();
+        Thread.sleep(2100);
+        key(KeyCode.ENTER);
+        assertEquals("0", answer.get(20, TimeUnit.SECONDS));
+        assertFalse(fx(() -> Docs.find(p).isPresent()));
+        Files.writeString(p, "free");
+    }
+
+    static final String DOC_TEXT = "# Questions\n\n>> one\n\ntext in the middle\n\n## Two\n\n>> two\n";
+
+    static String value(String lines, String key) {
+        return lines.lines().filter(l -> l.startsWith(key + ": ")).map(l -> l.substring(key.length() + 2)).findFirst().orElseThrow();
+    }
+
     @Test void aFileAPersonOpenedHasNoOwnerAndEveryCloseIsAQuestion(@org.junit.jupiter.api.io.TempDir Path dir) throws Exception {
         var p = file(dir, "g.md");
         fx(() -> { Windows.open(p); return null; });

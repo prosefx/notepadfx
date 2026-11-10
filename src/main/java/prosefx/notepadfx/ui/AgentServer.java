@@ -32,6 +32,8 @@ public final class AgentServer {
             case "status" -> answer.complete(AgentFacts.status(d, a));
             case "read" -> answer.complete(AgentFacts.read(d, a));
             case "close" -> AgentClose.run(d, a, answer);
+            case "lock" -> answer.complete(AgentLock.lock(d, a));
+            case "unlock" -> answer.complete(AgentLock.unlock(d, a));
             default -> answer.complete(AgentEdit.run(verb, d, a));
         }
     }

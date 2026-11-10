@@ -63,9 +63,9 @@ final class StatusBar {
     }
 
     void attach(Doc d) {
-        if (doc != null) { doc.dirty.removeListener(update); doc.version.removeListener(update); if (doc.hasEditor()) doc.editor().caret().removeListener(update); }
+        if (doc != null) { doc.lockedProperty().removeListener(update); doc.dirty.removeListener(update); doc.version.removeListener(update); if (doc.hasEditor()) doc.editor().caret().removeListener(update); }
         doc = d;
-        if (d != null) { d.dirty.addListener(update); d.version.addListener(update); d.editor().caret().addListener(update); }
+        if (d != null) { d.lockedProperty().addListener(update); d.dirty.addListener(update); d.version.addListener(update); d.editor().caret().addListener(update); }
         refresh();
     }
 
@@ -75,6 +75,7 @@ final class StatusBar {
         var where = doc.editor().where();
         info.setText(String.join("   ",
             doc.dirty.get() ? "● unsaved" : "saved",
+            doc.locked() ? "locked" : "",
             where.isEmpty() ? "" : where,
             words(text) + " words",
             text.length() + " chars",

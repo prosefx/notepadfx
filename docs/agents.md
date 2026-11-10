@@ -20,6 +20,17 @@ notepadfx replace <file> --lines 12-14 --expect-file old.txt --text-file new.txt
 
 Every change names what it expects to find. If the text has moved since you read it, notepadfx changes nothing and exits 5: read again and retry. `--version N` (from `read`) refuses unless the text is still at that version. An append cannot be stepped on, so it expects nothing. Include the blank line that separates blocks in your text. The person sees a notice in the status line, and Ctrl+Z takes the change back.
 
+### Locking: keep other writers out while the person works
+
+Without a lock, any program can write the file on disk while the person types in notepadfx, and they find out only when they save ("modified externally"). A locked file cannot be written by any other program: the write fails at once ("in use by another process"). Reading stays free, and notepadfx still saves. The person toggles the lock with Shift+F4; a session asks for it:
+
+```
+notepadfx lock <file> --owner <your-name>      # `status` then shows "locked: <your-name>" (or "person")
+notepadfx unlock <file> --owner <your-name>    # only the owner of that lock; anyone else gets exit 4
+```
+
+While a file is locked, change it only with the verbs above (`append`, `insert`, `replace`). If your own write on disk fails with "in use by another process", the file is locked: use the verbs, do not look for a way round. Closing a locked file puts the question to the person, even for the session that opened it, unless that session set the lock. The lock lasts until the file is closed or notepadfx ends. Windows only.
+
 ## Route 2: exclusive, the session writes the file itself
 
 Use it when you need full right over the file (a rewrite, a tool that writes it).

@@ -17,11 +17,15 @@ Markdown files open in the prosefx editor (WYSIWYG, saved losslessly); other tex
 
 ## Keys
 
-F2 save, F3 dictate (start, pause, resume), F4 close tab, F5 refresh, F6 next pane, F7 files panes, Shift+F7 spelling and grammar (on, then next issue), F8 outline, F9 read aloud from the caret or the selection, Shift+F9 move tab to a new window, F10 new window, F11 theme, F12 open. Esc stops reading or dictation. Ctrl+Tab and Ctrl+PageUp/PageDown move between tabs.
+F1 settings, F2 save, F3 dictate (start, pause, resume), F4 close tab, F5 refresh, F6 next pane, F7 files panes, Shift+F7 spelling and grammar (on, then next issue), F8 outline, F9 read aloud from the caret or the selection, Shift+F9 move tab to a new window, F10 new window, F11 theme, F12 open, Shift+F12 recent files. Shift+F5 and Shift+F6 jump to the previous and next `>>` comment. Shift+F1 opens today's journal, Shift+F2 and Shift+F3 step to the day before and after. Shift+F4 locks or unlocks the open file (see below). Esc stops reading or dictation. Ctrl+Tab and Ctrl+PageUp/PageDown move between tabs.
+
+## Daily journal
+
+Point Settings (F1) at a folder that holds one file per day, such as the journals folder of a notes graph, and give the file name pattern (default `yyyy_MM_dd.md`). `notepadfx journal` opens today's file, making it empty if it is not there yet, and works even when notepadfx is not running; `notepadfx journal -1` is yesterday, `+1` tomorrow, `notepadfx journal 2026-11-04` a given day. In the window, Shift+F1 is today and Shift+F2 / Shift+F3 step to the nearest day before and after that has a file.
 
 ## Command line, for people and AI sessions
 
-`notepadfx <file>:<line>` opens a file and selects that line; `notepadfx --help` lists everything. A coding session can read and change the live text of an open file together with the person typing in it (`read`, `append`, `insert`, `replace`), or take exclusive right over a file it opened (`close`, write, open again). See [docs/agents.md](docs/agents.md).
+`notepadfx <file>:<line>` opens a file and selects that line; `notepadfx --help` lists everything. A coding session can read and change the live text of an open file together with the person typing in it (`read`, `append`, `insert`, `replace`), or take exclusive right over a file it opened (`close`, write, open again). To keep other programs from writing a file the person is typing in, `notepadfx lock <file> --owner <name>` (or Shift+F4) holds it: any other program's write fails at once, reading stays free, and sessions change it through the notepadfx commands. See [docs/agents.md](docs/agents.md). Locking works on Windows only.
 
 ## Install and update
 

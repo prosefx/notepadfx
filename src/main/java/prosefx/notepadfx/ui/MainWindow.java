@@ -144,6 +144,15 @@ public final class MainWindow {
 
     void save() { Prompts.save(this, active.get()); }
 
+    /** Shift+F4: while a file is locked no other program can write it, so a session must come through notepadfx and cannot step on what is being typed. */
+    void toggleLock() {
+        var d = active.get();
+        if (d == null) return;
+        if (d.locked()) { d.unlock(); status.flash(d.name() + " is unlocked: other programs may write it"); return; }
+        try { d.lock("person"); status.flash(d.name() + " is locked: other programs cannot write it, sessions must use the notepadfx commands (Shift+F4 unlocks)"); }
+        catch (Exception e) { Prompts.error(this, "Could not lock " + d.name(), e); }
+    }
+
     void closeActive() {
         var d = active.get();
         if (d != null && Prompts.confirmClose(this, List.of(d))) tabs.remove(d);

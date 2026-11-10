@@ -16,6 +16,7 @@ final class AgentFacts {
         m.put("open", true);
         m.put("owner", d.owner() == null ? "none" : d.owner());
         m.put("unsaved", d.dirty.get());
+        m.put("locked", d.locked() ? d.lockedBy() : "no");
         m.put("version", d.version.get());
         m.put("lines", Lines.count(text));
         return m;

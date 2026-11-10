@@ -23,7 +23,11 @@ public enum Action {
     PROOF(F7, true, "Spelling", w -> w.onEditor(Editor::nextIssue)),
     PREV_COMMENT(F5, true, "Previous comment", w -> w.onEditor(e -> e.comment(-1))),
     NEXT_COMMENT(F6, true, "Next comment", w -> w.onEditor(e -> e.comment(1))),
-    RECENT(F12, true, "Recent files", MainWindow::recent);
+    RECENT(F12, true, "Recent files", MainWindow::recent),
+    TODAY(F1, true, "Today's journal", Journals::today),
+    DAY_BEFORE(F2, true, "Day before", w -> Journals.step(w, -1)),
+    DAY_AFTER(F3, true, "Day after", w -> Journals.step(w, 1)),
+    LOCK(F4, true, "Lock file", MainWindow::toggleLock);
 
     public final KeyCode key;
     public final boolean shift;

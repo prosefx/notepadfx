@@ -15,12 +15,15 @@ final class AgentClose {
 
     static void run(Doc d, Args a, CompletableFuture<String> answer) {
         var caller = a.get("owner", "");
-        var owned = d.owner() != null && d.owner().equals(caller);
+        // a lock set by anyone else (the person, another session) is the person's guard against writers: closing it would be the way round it
+        var locked = d.locked() && !d.lockedBy().equals(caller);
+        var owned = d.owner() != null && d.owner().equals(caller) && !locked;
         var unsaved = d.dirty.get();
         var w = Windows.windowOf(d) != null ? Windows.windowOf(d) : Windows.target();
         if (owned && !unsaved) { close(w, d); answer.complete(reply(Exit.DONE, "closed " + d.path + "\n")); return; }
         if (a.has("no-ask")) {
-            answer.complete(unsaved ? reply(Exit.UNSAVED, d.name() + " has unsaved changes, not closed\n") : reply(Exit.REFUSED, "only the session that opened " + d.name() + " may close it without asking\n"));
+            answer.complete(unsaved ? reply(Exit.UNSAVED, d.name() + " has unsaved changes, not closed\n")
+                : reply(Exit.REFUSED, locked ? d.name() + " is locked by " + d.lockedBy() + ", closing it needs the person's answer\n" : "only the session that opened " + d.name() + " may close it without asking\n"));
             return;
         }
         w.stage.toFront();
@@ -29,7 +32,8 @@ final class AgentClose {
 
     static String question(Doc d, String caller, boolean owned, boolean unsaved) {
         var who = caller.isEmpty() ? "A session" : "Session " + caller;
-        var what = owned ? " wants to close " + d.name() : " asks to close " + d.name() + ", which it did not open";
+        var what = d.locked() && !d.lockedBy().equals(caller) ? " asks to close " + d.name() + ", which is locked (so that only you and notepadfx write it)"
+            : owned ? " wants to close " + d.name() : " asks to close " + d.name() + ", which it did not open";
         return who + what + (unsaved ? ".\n\nIt has changes you have not saved." : ".") + "\n\n" + d.path;
     }
 
