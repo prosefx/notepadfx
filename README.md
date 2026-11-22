@@ -12,6 +12,7 @@ A fast markdown and text editor for the desktop, in JavaFX.
 - Several windows in one process. Launching notepadfx again opens a new window in the running process; a tab can be dragged out into its own window, or between windows.
 - Keyboard first: every action is on a function key, and the legend along the bottom is clickable.
 - Light and dark themes.
+- YAML front matter at the top of a markdown file is shown as a compact property block (key and value per line) and edited as text; an untouched file is saved byte for byte.
 
 Markdown files open in the prosefx editor (WYSIWYG, saved losslessly); other text files in a plain editor.
 
